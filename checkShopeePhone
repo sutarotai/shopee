@@ -1,0 +1,46 @@
+const puppeteer = require("puppeteer");
+
+async function checkShopeePhone(phoneNumber) {
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  });
+
+  const page = await browser.newPage();
+
+  // Bắt buộc phải truy cập trang để nhận cookies và CSRF
+  await page.goto("https://shopee.vn/buyer/reset?scenario=7", {
+    waitUntil: "domcontentloaded"
+  });
+
+  // Lấy cookies và CSRF token
+  const cookies = await page.cookies();
+  const csrfToken = cookies.find(c => c.name === "csrftoken")?.value || "";
+
+  // Gửi request từ trong page.evaluate để tận dụng context gốc
+  const response = await page.evaluate(async (phone, csrf) => {
+    const res = await fetch("/api/v4/account/basic/check_account_exist", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-csrftoken": csrf,
+        "x-api-source": "pc",
+        "x-requested-with": "XMLHttpRequest"
+      },
+      body: JSON.stringify({
+        phone: phone.startsWith("0") ? "84" + phone.slice(1) : phone,
+        scenario: 2
+      })
+    });
+
+    return await res.json();
+  }, phoneNumber, csrfToken);
+
+  await browser.close();
+
+  // Trả kết quả JSON
+  return response;
+}
+
+// Export để dùng cho web
+module.exports = checkShopeePhone;
