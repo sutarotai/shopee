@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Kiểm tra số Shopee</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button { padding: 10px; font-size: 16px; }
+    pre { background: #f0f0f0; padding: 10px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>Nhập số điện thoại Shopee (10 số):</h2>
+  <input type="text" id="phone" placeholder="VD: 0987654321" maxlength="10" />
+  <button onclick="check()">Kiểm tra</button>
+  <p id="status"></p>
+  <pre id="result"></pre>
+
+  <script>
+    async function check() {
+      const phone = document.getElementById('phone').value;
+      const res = await fetch('/api/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+
+      const data = await res.json();
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+      document.getElementById('status').textContent = data?.data?.exist
+        ? '✅ Số đã đăng ký Shopee'
+        : '❌ Số chưa đăng ký Shopee';
+    }
+  </script>
+</body>
+</html>
